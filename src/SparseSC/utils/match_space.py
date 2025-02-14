@@ -140,7 +140,8 @@ def MTLassoCV_MatchSpace_factory(v_pens=None, n_v_cv=5, sample_frac=1, Y_col_blo
 
 
 def _MTLassoCV_MatchSpace(
-    X, Y, v_pens=None, n_v_cv=5, sample_frac=1, Y_col_block_size=None, se_factor=None, normalize=True, fit_args={}, **kwargs
+    #X, Y, v_pens=None, n_v_cv=5, sample_frac=1, Y_col_block_size=None, se_factor=None, normalize=True, fit_args={}, **kwargs
+    X, Y, v_pens=None, n_v_cv=5, sample_frac=1, Y_col_block_size=None, se_factor=None, fit_args={}, **kwargs #normalize=True
 ):  # pylint: disable=missing-param-doc, unused-argument
     # A fake MT would do Lasso on y_mean = Y.mean(axis=1)
     if sample_frac < 1:
@@ -150,13 +151,14 @@ def _MTLassoCV_MatchSpace(
         Y = Y[sample, :]
     if Y_col_block_size is not None:
         Y = _block_summ_cols(Y, Y_col_block_size)
-    varselectorfit = MultiTaskLassoCV(normalize=normalize, cv=n_v_cv, alphas=v_pens, **fit_args).fit(
-        X, Y
-    )
+
+    varselectorfit = MultiTaskLassoCV(cv=n_v_cv, alphas=v_pens, **fit_args).fit(X, Y)
+    #varselectorfit = MultiTaskLassoCV(normalize=normalize, cv=n_v_cv, alphas=v_pens, **fit_args).fit(X, Y)
     best_v_pen = varselectorfit.alpha_
     if se_factor is not None:
         best_v_pen = _neg_se_rule(varselectorfit, factor=se_factor)
-        varselectorfit = MultiTaskLasso(alpha=best_v_pen, normalize=normalize).fit(X, Y)
+        #varselectorfit = MultiTaskLasso(alpha=best_v_pen, normalize=normalize).fit(X, Y)
+        varselectorfit = MultiTaskLasso(alpha=best_v_pen).fit(X, Y) #normalize=normalize
     V = np.sqrt(
         np.sum(np.square(varselectorfit.coef_), axis=0)
     )  # n_tasks x n_features -> n_feature
